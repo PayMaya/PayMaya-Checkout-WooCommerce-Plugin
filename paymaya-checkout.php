@@ -25,6 +25,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     }
 
     add_action( 'admin_notices', array( $this, 'do_ssl_check' ) );
+    add_action( 'admin_notices', array( $this, 'register_webhook' ) );
 
     if(is_admin()) {
       add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -126,15 +127,22 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     $totalAmount->value = number_format($customer_order->get_total(), 2, ".", "");
     $totalAmount->details = new PayMaya\Model\Checkout\ItemAmountDetails();
 
+    $random_token = uniqid("paymaya-pg-", true);
+
     $item_checkout->totalAmount = $totalAmount;
     $item_checkout->requestReferenceNumber = "$order_id";
     $item_checkout->redirectUrl = array(
-      "success" => $this->get_return_url($customer_order),
-      "failure" => $this->get_return_url($customer_order),
-      "cancel"  => $this->get_return_url($customer_order)
+      "success" => get_home_url() . "?wc-api=paymaya_checkout_success&cid=$order_id&n=$random_token",
+      "failure" => get_home_url() . "?wc-api=paymaya_checkout_failure&cid=$order_id&n=$random_token",
+      "cancel"  => get_home_url() . "?wc-api=paymaya_checkout_cancel&cid=$order_id&n=$random_token"
     );
-
     $item_checkout->execute();
+
+    WC_CustomOrderData::extend($customer_order);
+    $customer_order->custom->checkout_id = $item_checkout->id;
+    $customer_order->custom->checkout_url = $item_checkout->url;
+    $customer_order->custom->nonce = $random_token;
+    $customer_order->custom->save();
 
     return array(
       'result'   => 'success',

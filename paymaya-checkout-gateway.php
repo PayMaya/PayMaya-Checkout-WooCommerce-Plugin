@@ -8,6 +8,9 @@ Author: Diwa del Mundo, Voyager Innovations
 Author URI: https://developers.paymaya.com/
 */
 
+require_once __DIR__ . '/woocommerce-custom-order-data/woocommerce-custom-order-data.php';
+register_activation_hook( __FILE__,'woocommerce_custom_order_data_activate');
+
 // Include our Gateway Class and register Payment Gateway with WooCommerce
 add_action( 'plugins_loaded', 'paymaya_checkout_init', 0 );
 function paymaya_checkout_init() {
@@ -39,22 +42,35 @@ function paymaya_checkout_action_links( $links ) {
 	return array_merge( $plugin_links, $links );
 }
 
-add_action( 'woocommerce_api_paymaya_checkout_success', 'paymaya_checkout_success_webhook' );
 function paymaya_checkout_success_webhook() {
+    global $woocommerce;
+
     $checkoutGateway = new PayMaya_Checkout();
+    $order = new WC_Order($_GET['amp;cid']);
 
-    if(is_string($_GET['checkoutId']) && !empty($_GET['checkoutId'])) {
-        \PayMaya\PayMayaSDK::getInstance()->initCheckout($checkoutGateway->public_facing_api_key, $checkoutGateway->secret_api_key, "sandbox");
-        $checkout = new PayMaya\API\Checkout();
-        $checkout->id = $_GET['checkoutId'];
+    if(!empty($order->post)) {
+        WC_CustomOrderData::extend($order);
 
-        $checkout->retrieve();
+        if(strcmp($_GET['amp;n'], $order->custom->nonce) == 0) {
+            $checkout_id = $order->custom->checkout_id;
 
-        if($checkout->status == "COMPLETED" && $checkout->paymentStatus == "PAYMENT_SUCCESS") {
-            // Empty cart.
-            return $checkoutGateway->get_return_url($_GET['cid']);
+            \PayMaya\PayMayaSDK::getInstance()->initCheckout($checkoutGateway->public_facing_api_key, $checkoutGateway->secret_api_key, "sandbox");
+            $checkout = new PayMaya\API\Checkout();
+            $checkout->id = $checkout_id;
+            $checkout->retrieve();
+
+            if($checkout->status == "COMPLETED" && $checkout->paymentStatus == "PAYMENT_SUCCESS") {
+                // Empty cart.
+                $order->add_order_note( __( 'PayMaya Checkout payment completed.', 'paymaya-checkout' ) );
+                $order->payment_complete();
+                $woocommerce->cart->empty_cart();
+
+
+            }
+
+            wp_redirect($checkoutGateway->get_return_url($order));
+            exit(0);
         }
-
-        return $checkoutGateway->get_return_url($_GET['cid']);
     }
 }
+add_action( 'woocommerce_api_paymaya_checkout_success', 'paymaya_checkout_success_webhook' );
