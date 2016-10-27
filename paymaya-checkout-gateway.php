@@ -42,7 +42,7 @@ function paymaya_checkout_action_links( $links ) {
 	return array_merge( $plugin_links, $links );
 }
 
-function paymaya_checkout_success_webhook() {
+function paymaya_checkout_handler_webhook() {
     global $woocommerce;
 
     $checkoutGateway = new PayMaya_Checkout();
@@ -64,8 +64,11 @@ function paymaya_checkout_success_webhook() {
                 $order->add_order_note( __( 'PayMaya Checkout payment completed.', 'paymaya-checkout' ) );
                 $order->payment_complete();
                 $woocommerce->cart->empty_cart();
+            }
 
-
+            else {
+                wc_add_notice( "Payment failed.", 'error' );
+                $order->add_order_note( 'PayMaya Checkout payment failed. Status: ' .  $checkout->status . " Payment Status: " . $checkout->paymentStatus);
             }
 
             wp_redirect($checkoutGateway->get_return_url($order));
@@ -73,4 +76,4 @@ function paymaya_checkout_success_webhook() {
         }
     }
 }
-add_action( 'woocommerce_api_paymaya_checkout_success', 'paymaya_checkout_success_webhook' );
+add_action( 'woocommerce_api_paymaya_checkout_handler', 'paymaya_checkout_handler_webhook' );

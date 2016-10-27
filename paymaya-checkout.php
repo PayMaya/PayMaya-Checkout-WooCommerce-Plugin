@@ -132,9 +132,9 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     $item_checkout->totalAmount = $totalAmount;
     $item_checkout->requestReferenceNumber = "$order_id";
     $item_checkout->redirectUrl = array(
-      "success" => get_home_url() . "?wc-api=paymaya_checkout_success&cid=$order_id&n=$random_token",
-      "failure" => get_home_url() . "?wc-api=paymaya_checkout_failure&cid=$order_id&n=$random_token",
-      "cancel"  => get_home_url() . "?wc-api=paymaya_checkout_cancel&cid=$order_id&n=$random_token"
+      "success" => get_home_url() . "?wc-api=paymaya_checkout_handler&cid=$order_id&n=$random_token",
+      "failure" => get_home_url() . "?wc-api=paymaya_checkout_handler&cid=$order_id&n=$random_token",
+      "cancel"  => get_home_url() . "?wc-api=paymaya_checkout_handler&cid=$order_id&n=$random_token"
     );
     $item_checkout->execute();
 
