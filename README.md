@@ -1,0 +1,1 @@
+PayMaya Checkout WooCommerce plugin
