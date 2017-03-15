@@ -46,12 +46,12 @@ function paymaya_checkout_handler_webhook() {
     global $woocommerce;
 
     $checkoutGateway = new PayMaya_Checkout();
-    $order = new WC_Order($_GET['amp;cid']);
+    $order = new WC_Order($_GET['cid']);
 
     if(!empty($order->post)) {
         WC_CustomOrderData::extend($order);
 
-        if(strcmp($_GET['amp;n'], $order->custom->nonce) == 0) {
+        if(strcmp($_GET['n'], $order->custom->nonce) == 0) {
             $checkout_id = $order->custom->checkout_id;
 
             \PayMaya\PayMayaSDK::getInstance()->initCheckout($checkoutGateway->public_facing_api_key, $checkoutGateway->secret_api_key, "sandbox");
