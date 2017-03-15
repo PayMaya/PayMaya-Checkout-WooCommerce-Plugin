@@ -25,7 +25,6 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     }
 
     add_action( 'admin_notices', array( $this, 'do_ssl_check' ) );
-    add_action( 'admin_notices', array( $this, 'register_webhook' ) );
 
     if(is_admin()) {
       add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
