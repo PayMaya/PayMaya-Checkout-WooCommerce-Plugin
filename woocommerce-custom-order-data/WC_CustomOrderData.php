@@ -27,7 +27,7 @@ class WC_CustomOrderData
      * @param WC_Order $order
      */
     public static function extend(&$order) {
-        $order->custom = new WC_CustomOrderData($order->id);
+        $order->custom = new WC_CustomOrderData($order->get_id());
     }
 
     /**

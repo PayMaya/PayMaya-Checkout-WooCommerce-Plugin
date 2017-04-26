@@ -72,7 +72,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     );
   }
 
-  public function process_payment( $order_id ) {
+  public function process_payment($order_id) {
     global $woocommerce;
 
     \PayMaya\PayMayaSDK::getInstance()->initCheckout($this->public_facing_api_key, $this->secret_api_key, "sandbox");
@@ -82,24 +82,24 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     $user = new User();
     $item_checkout->buyer = $user->buyerInfo();
 
-    $customer_order = new WC_Order( $order_id );
+    $customer_order = new WC_Order($order_id);
 
-    $states = $wooCountries->get_states($customer_order->billing_country);
-    $billingState = $states[$customer_order->billing_state];
+    $states = $wooCountries->get_states($customer_order->get_billing_country());
+    $billingState = $states[$customer_order->get_billing_state()];
 
     $address = new PayMaya\Model\Checkout\Address();
-    $address->line1 = $customer_order->billing_address_1;
-    $address->line2 = $customer_order->billing_address_2;
-    $address->city = $customer_order->billing_city;
+    $address->line1 = $customer_order->get_billing_address_1();
+    $address->line2 = $customer_order->get_billing_address_2();
+    $address->city = $customer_order->get_billing_city();
     $address->state = $billingState;
-    $address->zipCode = $customer_order->billing_postcode;
+    $address->zipCode = $customer_order->get_billing_postcode();
     $address->countryCode = "PH";
 
     $item_checkout->buyer->shippingAddress = $address;
     $item_checkout->buyer->billingAddress  = $address;
 
     foreach($customer_order->get_items() as $key => $cart_item) {
-        $product = new WC_Product($cart_item['product_id']);
+        $product = new WC_Product($cart_item->get_product_id());
 
         $product_price = new PayMaya\Model\Checkout\ItemAmount();
         $product_price->currency = "PHP";
@@ -108,14 +108,14 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
 
         $line_total = new PayMaya\Model\Checkout\ItemAmount();
         $line_total->currency = "PHP";
-        $line_total->value = number_format($cart_item['line_total'], 2, ".", "");
+        $line_total->value = number_format($cart_item->get_subtotal(), 2, ".", "");
         $line_total->details = new PayMaya\Model\Checkout\ItemAmountDetails();
 
         $item = new PayMaya\Model\Checkout\Item();
         $item->name = $product->get_title();
         $item->code = $product->get_sku();
         $item->description = "";
-        $item->quantity = $cart_item['qty'];
+        $item->quantity = (string) $cart_item->get_quantity();
         $item->totalAmount = $line_total;
 
         $item_checkout->items[] = $item;
@@ -138,9 +138,11 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     $item_checkout->execute();
 
     WC_CustomOrderData::extend($customer_order);
+
     $customer_order->custom->checkout_id = $item_checkout->id;
     $customer_order->custom->checkout_url = $item_checkout->url;
     $customer_order->custom->nonce = $random_token;
+
     $customer_order->custom->save();
 
     return array(
@@ -157,11 +159,10 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
   // Check if we are forcing SSL on checkout pages
   // Custom function not required by the Gateway
   public function do_ssl_check() {
-    if ( $this->enabled == "yes" ) {
-      if ( get_option( 'woocommerce_force_ssl_checkout' ) == "no" ) {
+    if ($this->enabled == "yes") {
+      if (get_option( 'woocommerce_force_ssl_checkout' ) == "no") {
         echo "<div class=\"error\"><p>" . sprintf( __( "<strong>%s</strong> is enabled and WooCommerce is not forcing the SSL certificate on your checkout page. Please ensure that you have a valid SSL certificate and that you are <a href=\"%s\">forcing the checkout pages to be secured.</a>" ), $this->method_title, admin_url( 'admin.php?page=wc-settings&tab=checkout' ) ) . "</p></div>";
       }
     }
   }
-
 }
