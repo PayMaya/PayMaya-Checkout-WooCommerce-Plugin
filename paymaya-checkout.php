@@ -8,10 +8,10 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
   function __construct() {
     $this->id = "paymaya_checkout";
 
-    $this->method_title = __( "PayMaya Checkout", 'paymaya-checkout' );
-    $this->method_description = __( "PayMaya Checkout Payment Gateway Plug-in for WooCommerce", 'paymaya-checkout' );
+    $this->method_title = __("PayMaya Checkout", 'paymaya-checkout');
+    $this->method_description = __("PayMaya Checkout Payment Gateway Plug-in for WooCommerce", 'paymaya-checkout');
 
-    $this->title = __( "PayMaya Checkout", 'paymaya-checkout' );
+    $this->title = __("PayMaya Checkout", 'paymaya-checkout');
     $this->icon = null;
 
     $this->has_fields = true;
@@ -24,7 +24,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
       $this->$setting_key = $value;
     }
 
-    add_action( 'admin_notices', array( $this, 'do_ssl_check' ) );
+    add_action('admin_notices', array($this, 'do_ssl_check'));
 
     if(is_admin()) {
       add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -66,7 +66,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
         'title'       => __( 'Sandbox Mode', 'paymaya-checkout' ),
         'label'       => __( 'Enable Sandbox Mode', 'paymaya-checkout' ),
         'type'        => 'checkbox',
-        'description' => __( 'Perform transactions in sandbox mode. <br>Test card numbers available <a target="_blank" href="https://developers.paymaya.com/blog/entry/checkout-api-test-credit-card-account-numbers">here</a>.', 'paymaya-checkout' ),
+        'description' => __( 'Perform transactions in sandbox (test) mode. <br>Test card numbers available <a target="_blank" href="https://developers.paymaya.com/blog/entry/checkout-api-test-credit-card-account-numbers">here</a>.', 'paymaya-checkout' ),
         'default'     => 'no',
       )
     );
@@ -75,7 +75,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
   public function process_payment($order_id) {
     global $woocommerce;
 
-    \PayMaya\PayMayaSDK::getInstance()->initCheckout($this->public_facing_api_key, $this->secret_api_key, "sandbox");
+    \PayMaya\PayMayaSDK::getInstance()->initCheckout($this->public_facing_api_key, $this->secret_api_key, $this->environment());
 
     $item_checkout = new PayMaya\API\Checkout();
     $wooCountries = new WC_Countries();
@@ -160,9 +160,17 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
   // Custom function not required by the Gateway
   public function do_ssl_check() {
     if ($this->enabled == "yes") {
-      if (get_option( 'woocommerce_force_ssl_checkout' ) == "no") {
-        echo "<div class=\"error\"><p>" . sprintf( __( "<strong>%s</strong> is enabled and WooCommerce is not forcing the SSL certificate on your checkout page. Please ensure that you have a valid SSL certificate and that you are <a href=\"%s\">forcing the checkout pages to be secured.</a>" ), $this->method_title, admin_url( 'admin.php?page=wc-settings&tab=checkout' ) ) . "</p></div>";
+      if (get_option('woocommerce_force_ssl_checkout') == "no") {
+        echo "<div class=\"error\"><p>" . sprintf(__("<strong>%s</strong> is enabled and WooCommerce is not forcing the SSL certificate on your checkout page. Please ensure that you have a valid SSL certificate and that you are <a href=\"%s\">forcing the checkout pages to be secured.</a>"), $this->method_title, admin_url('admin.php?page=wc-settings&tab=checkout')) . "</p></div>";
       }
     }
+  }
+
+  public function is_sandbox() {
+      return $this->environment == "yes";
+  }
+
+  public function environment() {
+    return $this->is_sandbox() ? "SANDBOX" : "PRODUCTION";
   }
 }
