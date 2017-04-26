@@ -3,7 +3,7 @@
 Plugin Name: PayMaya Checkout WooCommerce Gateway
 Plugin URI: https://developers.paymaya.com/
 Description: PayMaya Checkout payment page extension for WooCommerce.
-Version: 1.0
+Version: 1.3
 Author: Diwa del Mundo, Voyager Innovations
 Author URI: https://developers.paymaya.com/
 */
