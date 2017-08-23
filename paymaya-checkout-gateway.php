@@ -43,37 +43,47 @@ function paymaya_checkout_action_links( $links ) {
 }
 
 function paymaya_checkout_handler_webhook() {
-    global $woocommerce;
+  global $woocommerce;
 
-    $checkoutGateway = new PayMaya_Checkout();
-    $order = new WC_Order($_GET['cid']);
+  $checkoutGateway = new PayMaya_Checkout();
 
-    if(!empty($order->post)) {
-        WC_CustomOrderData::extend($order);
+  $raw_checkout_input = file_get_contents("php://input");
+  $checkout = json_decode($raw_checkout_input);
 
-        if(strcmp($_GET['n'], $order->custom->nonce) == 0) {
-            $checkout_id = $order->custom->checkout_id;
+  if(isset($checkout->requestReferenceNumber)) {
+    $checkout_id = 0;
 
-            \PayMaya\PayMayaSDK::getInstance()->initCheckout($checkoutGateway->public_facing_api_key, $checkoutGateway->secret_api_key, $checkoutGateway->environment());
-            $checkout = new PayMaya\API\Checkout();
-            $checkout->id = $checkout_id;
-            $checkout->retrieve();
+    try {
+      $order = new WC_Order($checkout->requestReferenceNumber);
+      WC_CustomOrderData::extend($order);
 
-            if($checkout->status == "COMPLETED" && $checkout->paymentStatus == "PAYMENT_SUCCESS") {
-                // Empty cart.
-                $order->add_order_note(__('PayMaya Checkout payment completed.', 'paymaya-checkout'));
-                $order->payment_complete();
-                $woocommerce->cart->empty_cart();
-            }
-
-            else {
-                wc_add_notice("Payment failed.", 'error');
-                $order->add_order_note('PayMaya Checkout payment failed. Status: ' .  $checkout->status . " Payment Status: " . $checkout->paymentStatus);
-            }
-
-            wp_redirect($checkoutGateway->get_return_url($order));
-            exit(0);
-        }
+      $checkout_id = $order->custom->checkout_id;
     }
+    catch(Exception $e) {
+//      echo "order is not existing.";
+    }
+
+    if(strcmp($_GET['wht'], $checkoutGateway->webhook_token) == 0 && $checkout_id != 0) {
+      \PayMaya\PayMayaSDK::getInstance()->initCheckout($checkoutGateway->public_facing_api_key, $checkoutGateway->secret_api_key, $checkoutGateway->environment());
+
+      $checkout = new PayMaya\API\Checkout();
+      $checkout->id = $checkout_id;
+      $checkout->retrieve();
+
+      if($checkout->status == "COMPLETED" && $checkout->paymentStatus == "PAYMENT_SUCCESS") {
+          // Empty cart.
+//          echo "Success";
+          $order->payment_complete();
+          $woocommerce->cart->empty_cart();
+      }
+
+      else {
+//          echo 'PayMaya Checkout payment failed. Status: ' .  $checkout->status . " Payment Status: " . $checkout->paymentStatus;
+      }
+
+      exit(0);
+    }
+  }
+  exit(0);
 }
 add_action('woocommerce_api_paymaya_checkout_handler', 'paymaya_checkout_handler_webhook');

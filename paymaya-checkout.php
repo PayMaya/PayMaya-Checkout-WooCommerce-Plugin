@@ -149,9 +149,9 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     $item_checkout->totalAmount = $totalAmount;
     $item_checkout->requestReferenceNumber = "$order_id";
     $item_checkout->redirectUrl = array(
-      "success" => get_home_url() . "?wc-api=paymaya_checkout_handler&cid=$order_id&n=$random_token",
-      "failure" => get_home_url() . "?wc-api=paymaya_checkout_handler&cid=$order_id&n=$random_token",
-      "cancel"  => get_home_url() . "?wc-api=paymaya_checkout_handler&cid=$order_id&n=$random_token"
+      "success" => $this->get_return_url($customer_order),
+      "failure" => $this->get_return_url($customer_order),
+      "cancel"  => $this->get_return_url($customer_order)
     );
     $item_checkout->execute();
 
@@ -217,7 +217,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
 
     $success_webhook = new PayMaya\API\Webhook();
     $success_webhook->name = $webhook_name;
-    $success_webhook->callbackUrl = $webhook_url . "&" . $this->webhook_token;
+    $success_webhook->callbackUrl = $webhook_url . "&wht=" . $this->webhook_token;
 
     $success_webhook_result = json_decode($success_webhook->register());
 
