@@ -111,7 +111,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     $address->city = $customer_order->get_billing_city();
     $address->state = $billingState;
     $address->zipCode = $customer_order->get_billing_postcode();
-    $address->countryCode = "PH";
+    $address->countryCode = $customer_order->get_billing_country();
 
     $item_checkout->buyer->shippingAddress = $address;
     $item_checkout->buyer->billingAddress  = $address;
@@ -120,12 +120,12 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
         $product = new WC_Product($cart_item->get_product_id());
 
         $product_price = new PayMaya\Model\Checkout\ItemAmount();
-        $product_price->currency = "PHP";
+        $product_price->currency = get_woocommerce_currency();
         $product_price->value = number_format($product->get_price(), 2, ".", "");
         $product_price->details = new PayMaya\Model\Checkout\ItemAmountDetails();
 
         $line_total = new PayMaya\Model\Checkout\ItemAmount();
-        $line_total->currency = "PHP";
+        $line_total->currency = get_woocommerce_currency();
         $line_total->value = number_format($cart_item->get_subtotal(), 2, ".", "");
         $line_total->details = new PayMaya\Model\Checkout\ItemAmountDetails();
 
@@ -140,7 +140,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     }
 
     $totalAmount = new PayMaya\Model\Checkout\ItemAmount();
-    $totalAmount->currency = "PHP";
+    $totalAmount->currency = get_woocommerce_currency();
     $totalAmount->value = number_format($customer_order->get_total(), 2, ".", "");
     $totalAmount->details = new PayMaya\Model\Checkout\ItemAmountDetails();
 
