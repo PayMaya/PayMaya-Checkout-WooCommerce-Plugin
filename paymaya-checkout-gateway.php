@@ -3,7 +3,7 @@
 Plugin Name: PayMaya Checkout WooCommerce Gateway
 Plugin URI: https://developers.paymaya.com/
 Description: PayMaya Checkout payment page extension for WooCommerce.
-Version: 1.5.1
+Version: 1.5.2
 Author: PayMaya Philippines Inc
 Author URI: https://developers.paymaya.com/
 */
@@ -60,7 +60,7 @@ function paymaya_checkout_handler_webhook() {
       $checkout_id = $order->custom->checkout_id;
     }
     catch(Exception $e) {
-//      echo "order is not existing.";
+      // TODO: Log invalid order.
     }
 
     if(strcmp($_GET['wht'], $checkoutGateway->webhook_token) == 0 && $checkout_id != 0) {
@@ -71,19 +71,25 @@ function paymaya_checkout_handler_webhook() {
       $checkout->retrieve();
 
       if($checkout->status == "COMPLETED" && $checkout->paymentStatus == "PAYMENT_SUCCESS") {
-          // Empty cart.
-//          echo "Success";
-          $order->payment_complete();
-          $woocommerce->cart->empty_cart();
+        // Empty cart.
+        $order->payment_complete();
+        $woocommerce->cart->empty_cart();
       }
 
       else {
-//          echo 'PayMaya Checkout payment failed. Status: ' .  $checkout->status . " Payment Status: " . $checkout->paymentStatus;
+        echo json_encode(array(
+          'message' => 'failed'
+        ));
       }
 
-      exit(0);
+      echo json_encode(array(
+        'message' => 'success'
+      ));
     }
   }
-  exit(0);
+
+  echo json_encode(array(
+    'message' => 'nop'
+  ));
 }
 add_action('woocommerce_api_paymaya_checkout_handler', 'paymaya_checkout_handler_webhook');
