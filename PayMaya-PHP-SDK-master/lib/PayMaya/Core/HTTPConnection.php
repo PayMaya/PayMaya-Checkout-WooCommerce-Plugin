@@ -17,7 +17,7 @@ class HTTPConnection
 
 	public function execute($data)
 	{
-		$session = curl_init($this->httpConfig->getUrl());
+		$session = curl_init();
 		curl_setopt_array($session, $this->httpConfig->getCurlOptions());
 		curl_setopt($session, CURLOPT_URL, $this->httpConfig->getUrl());
 		curl_setopt($session, CURLOPT_HEADER, true);
