@@ -97,24 +97,36 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
 
     $item_checkout = new PayMaya\API\Checkout();
     $wooCountries = new WC_Countries();
-    $user = new User();
-    $item_checkout->buyer = $user->buyerInfo();
 
     $customer_order = new WC_Order($order_id);
 
-    $states = $wooCountries->get_states($customer_order->get_billing_country());
-    $billingState = $states[$customer_order->get_billing_state()];
+    // Build Buyer
+    $buyer = new PayMaya\Model\Checkout\Buyer();
+    $buyer->firstName = $customer_order->get_billing_first_name();
+    $buyer->lastName = $customer_order->get_billing_last_name();
 
+    // Build Contact
+    $contact = new PayMaya\Model\Checkout\Contact();
+    $contact->phone = $customer_order->get_billing_phone();
+    $contact->email = $customer_order->get_billing_email();
+    $buyer->contact = $contact;
+
+    // Build Address
     $address = new PayMaya\Model\Checkout\Address();
     $address->line1 = $customer_order->get_billing_address_1();
     $address->line2 = $customer_order->get_billing_address_2();
     $address->city = $customer_order->get_billing_city();
+    $states = $wooCountries->get_states($customer_order->get_billing_country());
+    $billingState = $states[$customer_order->get_billing_state()];
     $address->state = $billingState;
     $address->zipCode = $customer_order->get_billing_postcode();
     $address->countryCode = $customer_order->get_billing_country();
 
-    $item_checkout->buyer->shippingAddress = $address;
-    $item_checkout->buyer->billingAddress  = $address;
+    $buyer->shippingAddress = $address;
+    $buyer->billingAddress  = $address;
+
+    // Finally assign Buyer
+    $item_checkout->buyer = $buyer;
 
     foreach($customer_order->get_items() as $key => $cart_item) {
         $product = new WC_Product($cart_item->get_product_id());
