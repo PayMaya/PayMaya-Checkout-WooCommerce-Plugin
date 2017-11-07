@@ -147,6 +147,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
         $item->description = "";
         $item->quantity = (string) $cart_item->get_quantity();
         $item->totalAmount = $line_total;
+        $item->amount = $product_price;
 
         $item_checkout->items[] = $item;
     }
