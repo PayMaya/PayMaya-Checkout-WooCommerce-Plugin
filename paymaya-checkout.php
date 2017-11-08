@@ -252,4 +252,17 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
       $webhook->delete();
     }
   }
+
+  public function log($message, $type = "info") {
+    wc_get_logger()->log($type, $message, array('source' => 'paymaya_checkout'));
+  }
+
+  public function logStart() {
+    $this->log("-------------------");
+  }
+
+  public function logEnd() {
+    $this->log("-------------------");
+  }
+
 }
