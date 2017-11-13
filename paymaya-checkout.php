@@ -135,11 +135,13 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
         $product_price->currency = get_woocommerce_currency();
         $product_price->value = number_format($product->get_price(), 2, ".", "");
         $product_price->details = new PayMaya\Model\Checkout\ItemAmountDetails();
+        $product_price->details->subtotal = $product_price->value;
 
         $line_total = new PayMaya\Model\Checkout\ItemAmount();
         $line_total->currency = get_woocommerce_currency();
         $line_total->value = number_format($cart_item->get_subtotal(), 2, ".", "");
         $line_total->details = new PayMaya\Model\Checkout\ItemAmountDetails();
+        $line_total->details->subtotal = $line_total->value;
 
         $item = new PayMaya\Model\Checkout\Item();
         $item->name = $product->get_title();
@@ -156,6 +158,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     $totalAmount->currency = get_woocommerce_currency();
     $totalAmount->value = number_format($customer_order->get_total(), 2, ".", "");
     $totalAmount->details = new PayMaya\Model\Checkout\ItemAmountDetails();
+    $totalAmount->details->subtotal = $totalAmount->value;
 
     $random_token = uniqid("paymaya-pg-", true);
 
