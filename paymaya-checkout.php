@@ -69,23 +69,11 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
         'description' => __('Perform transactions in sandbox (test) mode. <br>Test card numbers available <a target="_blank" href="https://developers.paymaya.com/blog/entry/checkout-api-test-credit-card-account-numbers">here</a>.', 'paymaya-checkout'),
         'default'     => 'no',
       ),
-      'webhook_success'                 => array(
-        'title'    => __('Webhook Successful', 'paymaya-checkout'),
-        'type'     => 'text',
-        'desc_tip' => __('URL that gets notified by PayMaya Checkout after a successful transaction.', 'paymaya-checkout'),
-        'default'  => __(get_home_url() . "?wc-api=paymaya_checkout_handler", 'paymaya-checkout'),
-      ),
-      'webhook_failure'                 => array(
-          'title'    => __('Webhook Failure', 'paymaya-checkout'),
-          'type'     => 'text',
-          'desc_tip' => __('URL that gets notified by PayMaya Checkout after a failed transaction.', 'paymaya-checkout'),
-          'default'  => __(get_home_url() . "?wc-api=paymaya_checkout_handler", 'paymaya-checkout'),
-      ),
       'webhook_token'                 => array(
           'title'    => __('Webhook Token', 'paymaya-checkout'),
           'type'     => 'text',
-          'desc_tip' => __('Authenticates the webhook request.', 'paymaya-checkout'),
-          'default'  => __(uniqid("pgwh-", true) . uniqid() . uniqid(), 'paymaya-checkout'),
+          'desc_tip' => __('Please paste this webhook Url + token on your PayMaya Manager success webhook. Url: ' . get_home_url() . "?wc-api=paymaya_checkout_handler&wht=<token_value>", 'paymaya-checkout'),
+          'default'  => __(uniqid("pgwh-", true), 'paymaya-checkout'),
       )
     );
   }
@@ -209,48 +197,7 @@ class PayMaya_Checkout extends WC_Payment_Gateway {
     global $woocommerce;
 
     $is_options_saved = parent::process_admin_options();
-
-    if(isset($this->public_facing_api_key) && isset($this->secret_api_key)) {
-      $this->delete_webhooks();
-
-      $is_options_saved = $this->register_webhook("success");
-      $is_options_saved = $this->register_webhook("failed");
-
-      $this->display_errors();
-    }
-
     return $is_options_saved;
-  }
-
-  private function register_webhook($type = "success") {
-    \PayMaya\PayMayaSDK::getInstance()->initCheckout($this->public_facing_api_key, $this->secret_api_key, $this->environment());
-
-    $webhook_name = $type== "success" ? PayMaya\API\Webhook::CHECKOUT_SUCCESS : PayMaya\API\Webhook::CHECKOUT_FAILURE;
-    $webhook_url = $type == "success" ? $this->webhook_success : $this->webhook_failure;
-
-    $success_webhook = new PayMaya\API\Webhook();
-    $success_webhook->name = $webhook_name;
-    $success_webhook->callbackUrl = $webhook_url . "&wht=" . $this->webhook_token;
-
-    $success_webhook_result = json_decode($success_webhook->register());
-
-    if(isset($success_webhook_result->error)) {
-      $this->add_error("There was an error saving your webhook. (" . $success_webhook_result->error->code . " : " . $success_webhook_result->error->message .")");
-      return false;
-    }
-
-    return true;
-  }
-
-  private function delete_webhooks() {
-    \PayMaya\PayMayaSDK::getInstance()->initCheckout($this->public_facing_api_key, $this->secret_api_key, $this->environment());
-
-    $webhooks = PayMaya\API\Webhook::retrieve();
-    for($i = 0; $i < count($webhooks); $i++) {
-      $webhook = new PayMaya\API\Webhook();
-      $webhook->id = $webhooks[$i]->id;
-      $webhook->delete();
-    }
   }
 
   public function log($message, $type = "info") {
